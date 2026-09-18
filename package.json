@@ -1,0 +1,12 @@
+{
+  "name": "api-serie-c-sofascore",
+  "version": "1.0.0",
+  "description": "API Serie C italiana basata su Sofascore",
+  "main": "api/index.js",
+  "scripts": {
+    "start": "node api/index.js"
+  },
+  "engines": {
+    "node": "20.x"
+  }
+}
