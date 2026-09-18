@@ -3,73 +3,110 @@ const BASE_URL = "https://api.sofascore.com/api/v1";
 module.exports = async function handler(req, res) {
   try {
 
-    const tournamentId = 11445; // Serie C Girone A
+    const tournamentId = 11445;
 
     const url =
       `${BASE_URL}/unique-tournament/${tournamentId}/events/last/0`;
 
     const response = await fetch(url, {
+      method: "GET",
+
       headers: {
-        "User-Agent": "Mozilla/5.0",
-        "Accept": "application/json"
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/140.0.0.0 Safari/537.36",
+        "Accept": "application/json, text/plain, */*",
+        "Accept-Language": "it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7",
+        "Referer": "https://www.sofascore.com/",
+        "Origin": "https://www.sofascore.com",
+        "X-Requested-With": "XMLHttpRequest"
       }
     });
 
-    const data = await response.json();
+    const text = await response.text();
+
+    let data;
+
+    try {
+      data = JSON.parse(text);
+    } catch {
+      data = {
+        risposta_testo: text
+      };
+    }
 
     res.status(200).json({
-      url,
-      success: response.ok,
+
+      url: url,
+
+      successo: response.ok,
+
       status_http: response.status,
 
-      totale: data.events
-        ? data.events.length
-        : 0,
+      totale:
+        Array.isArray(data.events)
+          ? data.events.length
+          : 0,
 
-      eventi: (data.events || []).slice(0, 10).map(event => ({
+      eventi:
+        Array.isArray(data.events)
+          ? data.events.slice(0, 10).map(event => ({
 
-        id: event.id,
+              id: event.id,
 
-        torneo:
-          event.tournament?.name || "",
+              torneo:
+                event.tournament?.name || "",
 
-        torneo_id:
-          event.tournament?.uniqueTournament?.id || null,
+              torneo_id:
+                event.tournament?.uniqueTournament?.id ||
+                event.tournament?.id ||
+                null,
 
-        stagione:
-          event.season?.name || "",
+              stagione:
+                event.season?.name || "",
 
-        stagione_id:
-          event.season?.id || null,
+              stagione_id:
+                event.season?.id || null,
 
-        casa:
-          event.homeTeam?.name || "",
+              casa:
+                event.homeTeam?.name || "",
 
-        trasferta:
-          event.awayTeam?.name || "",
+              trasferta:
+                event.awayTeam?.name || "",
 
-        data:
-          event.startTimestamp
-            ? new Date(
-                event.startTimestamp * 1000
-              ).toISOString()
-            : null,
+              data:
+                event.startTimestamp
+                  ? new Date(
+                      event.startTimestamp * 1000
+                    ).toISOString()
+                  : null,
 
-        roundInfo:
-          event.roundInfo || null,
+              roundInfo:
+                event.roundInfo || null,
 
-        stato:
-          event.status?.description ||
-          event.status?.type ||
-          ""
+              stato:
+                event.status?.description ||
+                event.status?.type ||
+                "",
 
-      }))
+              gol_casa:
+                event.homeScore?.current ?? null,
+
+              gol_trasferta:
+                event.awayScore?.current ?? null
+
+            }))
+          : [],
+
+      errore_api:
+        !response.ok
+          ? data
+          : null
 
     });
 
   } catch (error) {
 
     res.status(500).json({
+      successo: false,
       errore: error.message
     });
 
